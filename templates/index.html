@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>SIMPLE CALCULATOR</h1>
+        <form id="calc-form">
+            <label for="expression">Enter Expression:</label>
+            <input type="text" id="expression" name="expression" required placeholder="e.g., 2 + 3 * 4">
+            
+            <label for="notation">Select Notation:</label>
+            <select id="notation" name="notation" required>
+                <option value="infix">Infix</option>
+                <option value="prefix">Prefix</option>
+                <option value="postfix">Postfix</option>
+            </select>
+            
+            <div class="buttons">
+                <button type="submit">Calculate</button>
+                <button type="button" id="clear-btn">Clear</button>
+            </div>
+        </form>
+
+        <!-- Result display -->
+        <div id="spinner" class="spinner"></div>
+        <div id="result"></div>
+
+        <!-- Expression history -->
+        <div id="history">
+            <h2>History</h2>
+            <ul id="history-list"></ul>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('calc-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const expression = document.getElementById('expression').value;
+            const notation = document.getElementById('notation').value;
+
+            document.getElementById('spinner').style.display = 'block';
+
+            fetch('/evaluate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ expression: expression, notation: notation }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('spinner').style.display = 'none';
+                if (data.error) {
+                    document.getElementById('result').innerHTML = `<span class="error">Error: ${data.error}</span>`;
+                } else {
+                    document.getElementById('result').innerHTML = `<span class="success">Result: ${data.result}</span>`;
+                    addToHistory(expression, data.result);
+                }
+            })
+            .catch((error) => {
+                document.getElementById('spinner').style.display = 'none';
+                document.getElementById('result').innerHTML = `<span class="error">Error: ${error}</span>`;
+            });
+        });
+
+        // Clear button functionality
+        document.getElementById('clear-btn').addEventListener('click', function() {
+            document.getElementById('expression').value = '';
+            document.getElementById('result').innerHTML = '';
+        });
+
+        // Add to history
+        function addToHistory(expression, result) {
+            const historyList = document.getElementById('history-list');
+            const li = document.createElement('li');
+            li.innerHTML = `<strong>${expression}</strong> = ${result}`;
+            historyList.appendChild(li);
+        }
+    </script>
+</body>
+</html>
